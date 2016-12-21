@@ -69,10 +69,13 @@ stylesheet url =
     in
         node tag attrs children
 
+viewTask : String -> String -> List (Html Msg)
+viewTask name assignee = [strong [] [text name], text " Assigned to: ", strong [] [text assignee]]
+
 viewTasks : List Task -> List (Html Msg)
-viewTasks tasks = List.map (\{name, assignee} -> li [] [
-        strong [] [text name], text " Assigned to: ", strong [] [text assignee]
-    ]) tasks
+viewTasks tasks = List.map (\{name, assignee} -> li []
+        (viewTask name assignee)
+    ) tasks
 
 view : Model -> Html Msg
 view {tasks, editing} =
@@ -87,14 +90,13 @@ view {tasks, editing} =
                        h2 [] [text "Tasks"]
                      , ul [] (viewTasks tasks)
                  ]
-               , div [class "col-md-6"] [
-                   div [class "form-group"] [
+               , div [class "col-md-6"]
+                   ((div [class "form-group"] [
                          h2 [] [text "Add new tasks"]
                        , input [type_ "text", placeholder "Task", onInput UpdateTaskField, value editing.name] []
                        , input [type_ "text", placeholder "Assignee", onInput UpdateAssigneeField, value editing.assignee] []
                        , button [class "btn", onClick AddTask] [text "Add"]
-                   ]
-               ]
+                   ]) :: viewTask editing.name editing.assignee)
            ]
        ]
     ]
