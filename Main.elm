@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onInput)
 
 
 main : Program Never Model Msg
@@ -17,14 +18,18 @@ main =
 
 -- Model
 
+type alias Task = {name: String, assignee: String}
 
 type alias Model =
-    { name : String }
+    { tasks: List Task
+    , editing: Task}
 
+emptyTask : Task
+emptyTask = {name = "", assignee = ""}
 
 init : ( Model, Cmd Msg )
 init =
-    Model "world" ! []
+    Model [] emptyTask ! []
 
 
 
@@ -32,14 +37,21 @@ init =
 
 
 type Msg
-    = NoOp
+    = AddTask
+    | UpdateTaskField String
+    | UpdateAssigneeField String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let current = model.editing in
     case msg of
-        NoOp ->
-            model ! []
+        AddTask ->
+            {model | tasks = model.editing::model.tasks, editing = emptyTask } ! []
+        (UpdateTaskField task) ->
+            {model | editing = {current | name = task }} ! []
+        (UpdateAssigneeField assignee) ->
+            {model | editing = {current | assignee = assignee }} ! []
 
 
 
@@ -57,11 +69,13 @@ stylesheet url =
     in
         node tag attrs children
 
-viewTasks : Model -> List (Html Msg)
-viewTasks _ = []
+viewTasks : List Task -> List (Html Msg)
+viewTasks tasks = List.map (\{name, assignee} -> li [] [
+        strong [] [text name], text " Assigned to: ", strong [] [text assignee]
+    ]) tasks
 
 view : Model -> Html Msg
-view model =
+view {tasks, editing} =
     div [] [
          stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
        , stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
@@ -71,14 +85,14 @@ view model =
            , div [class "row"] [
                  div [class "col-md-6"] [
                        h2 [] [text "Tasks"]
-                     , ul [] (viewTasks model)
+                     , ul [] (viewTasks tasks)
                  ]
                , div [class "col-md-6"] [
                    div [class "form-group"] [
                          h2 [] [text "Add new tasks"]
-                       , input [type_ "text", placeholder "Task"] []
-                       , input [type_ "text", placeholder "Assignee"] []
-                       , button [class "btn"] [text "Add"]
+                       , input [type_ "text", placeholder "Task", onInput UpdateTaskField, value editing.name] []
+                       , input [type_ "text", placeholder "Assignee", onInput UpdateAssigneeField, value editing.assignee] []
+                       , button [class "btn", onClick AddTask] [text "Add"]
                    ]
                ]
            ]
