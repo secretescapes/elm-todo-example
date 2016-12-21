@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onCheck)
 
 
 main : Program Never Model Msg
@@ -18,14 +18,14 @@ main =
 
 -- Model
 
-type alias Task = {name: String, assignee: String}
+type alias Task = {name: String, assignee: String, done: Bool}
 
 type alias Model =
     { tasks: List Task
     , editing: Task}
 
 emptyTask : Task
-emptyTask = {name = "", assignee = ""}
+emptyTask = {name = "", assignee = "", done = False}
 
 init : ( Model, Cmd Msg )
 init =
@@ -40,6 +40,7 @@ type Msg
     = AddTask
     | UpdateTaskField String
     | UpdateAssigneeField String
+    | ToggleDoneCheck Int Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -52,8 +53,14 @@ update msg model =
             {model | editing = {current | name = task }} ! []
         (UpdateAssigneeField assignee) ->
             {model | editing = {current | assignee = assignee }} ! []
+        (ToggleDoneCheck target done) ->
+            let newTasks = List.indexedMap (toggle done target) model.tasks in
+            {model | tasks = newTasks} ! []
 
-
+toggle : Bool -> Int -> Int -> Task -> Task
+toggle done target idx task = case (target == idx) of
+    True -> {task | done = done}
+    False -> task
 
 -- View
 
@@ -73,8 +80,8 @@ viewTask : String -> String -> List (Html Msg)
 viewTask name assignee = [strong [] [text name], text " Assigned to: ", strong [] [text assignee]]
 
 viewTasks : List Task -> List (Html Msg)
-viewTasks tasks = List.map (\{name, assignee} -> li []
-        (viewTask name assignee)
+viewTasks tasks = List.indexedMap (\idx {name, assignee, done} -> li (if done then [class "done_class"] else [])
+        ((viewTask name assignee) ++ [input [type_ "checkbox", onCheck (ToggleDoneCheck idx)] []] )
     ) tasks
 
 isFormReady : Task -> Bool
