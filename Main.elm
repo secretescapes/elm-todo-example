@@ -77,6 +77,14 @@ viewTasks tasks = List.map (\{name, assignee} -> li []
         (viewTask name assignee)
     ) tasks
 
+isFormReady : Task -> Bool
+isFormReady {name, assignee} = not (String.isEmpty name) && not (String.isEmpty assignee)
+
+displayIf : Bool -> Attribute Msg
+displayIf flag = case flag of
+    False -> style [("display", "none")]
+    True -> style []
+
 view : Model -> Html Msg
 view {tasks, editing} =
     div [] [
@@ -95,7 +103,7 @@ view {tasks, editing} =
                          h2 [] [text "Add new tasks"]
                        , input [type_ "text", placeholder "Task", onInput UpdateTaskField, value editing.name] []
                        , input [type_ "text", placeholder "Assignee", onInput UpdateAssigneeField, value editing.assignee] []
-                       , button [class "btn", onClick AddTask] [text "Add"]
+                       , button [class "btn", onClick AddTask, displayIf (isFormReady editing)] [text "Add"]
                    ]) :: viewTask editing.name editing.assignee)
            ]
        ]
