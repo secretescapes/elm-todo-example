@@ -92,6 +92,12 @@ displayIf flag = case flag of
     False -> style [("display", "none")]
     True -> style []
 
+count : List Task -> String
+count tasks = let doneCount = List.length (List.filter (\t -> t.done) tasks)
+                  totalCount = List.length tasks
+              in toString doneCount ++ "/" ++ toString totalCount
+
+
 view : Model -> Html Msg
 view {tasks, editing} =
     div [] [
@@ -102,7 +108,7 @@ view {tasks, editing} =
              h1 [] [text "Todo App"]
            , div [class "row"] [
                  div [class "col-md-6"] [
-                       h2 [] [text "Tasks"]
+                       h2 [] [text ("Tasks " ++ count tasks )]
                      , ul [] (viewTasks tasks)
                  ]
                , div [class "col-md-6"]
