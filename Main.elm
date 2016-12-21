@@ -22,14 +22,15 @@ type alias Task = {name: String, assignee: String, done: Bool}
 
 type alias Model =
     { tasks: List Task
-    , editing: Task}
+    , editing: Task
+    , filter: String}
 
 emptyTask : Task
 emptyTask = {name = "", assignee = "", done = False}
 
 init : ( Model, Cmd Msg )
 init =
-    Model [] emptyTask ! []
+    Model [] emptyTask "" ! []
 
 
 
@@ -41,6 +42,7 @@ type Msg
     | UpdateTaskField String
     | UpdateAssigneeField String
     | ToggleDoneCheck Int Bool
+    | SetTasksFilter String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -56,6 +58,7 @@ update msg model =
         (ToggleDoneCheck target done) ->
             let newTasks = List.indexedMap (toggle done target) model.tasks in
             {model | tasks = newTasks} ! []
+        (SetTasksFilter str) -> {model | filter = String.toLower str} ! []
 
 toggle : Bool -> Int -> Int -> Task -> Task
 toggle done target idx task = case (target == idx) of
@@ -97,9 +100,11 @@ count tasks = let doneCount = List.length (List.filter (\t -> t.done) tasks)
                   totalCount = List.length tasks
               in toString doneCount ++ "/" ++ toString totalCount
 
+filterBy : String -> List Task -> List Task
+filterBy filter = List.filter (\{name} -> String.contains filter (String.toLower name))
 
 view : Model -> Html Msg
-view {tasks, editing} =
+view {tasks, editing, filter} =
     div [] [
          stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
        , stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
@@ -109,7 +114,8 @@ view {tasks, editing} =
            , div [class "row"] [
                  div [class "col-md-6"] [
                        h2 [] [text ("Tasks " ++ count tasks )]
-                     , ul [] (viewTasks tasks)
+                     , input [type_ "text", onInput SetTasksFilter, placeholder "Filter by task name"] []
+                     , ul [] (viewTasks (filterBy filter tasks))
                  ]
                , div [class "col-md-6"]
                    ((div [class "form-group"] [
